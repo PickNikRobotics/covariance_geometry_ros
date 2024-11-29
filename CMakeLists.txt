@@ -93,10 +93,8 @@ if(BUILD_TESTING)
   )
 
   find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-  find_package(GTest REQUIRED)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_lint_auto_find_test_dependencies()
   ament_find_gtest()
 
   foreach(test_name ${TEST_TARGETS})
