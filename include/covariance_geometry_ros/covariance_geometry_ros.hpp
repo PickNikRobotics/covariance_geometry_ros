@@ -14,9 +14,11 @@
 #ifndef COVARIANCE_GEOMETRY_ROS__COVARIANCE_GEOMETRY_ROS_HPP_
 #define COVARIANCE_GEOMETRY_ROS__COVARIANCE_GEOMETRY_ROS_HPP_
 
+#include <tf2/LinearMath/Transform.h>
+
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
-// #include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 using Pose = geometry_msgs::msg::Pose;
 using PoseWithCovariance = geometry_msgs::msg::PoseWithCovariance;
@@ -69,8 +71,14 @@ static inline PoseWithCovariance compose(
 }
 
 // Return-by-value versions using TF2 transforms:
-// PoseWithCovariance compose(const PoseWithCovariance &a,
-//                            const tf2::Transform &b);
+Pose compose(
+  const Pose & a,
+  const tf2::Transform & b);
+
+PoseWithCovariance compose(
+  const PoseWithCovariance & a,
+  const tf2::Transform & b);
+
 /** @} */
 /** @name  Pose inverse composition (a "as seen from" b): out = a (-) b
       @{ */

@@ -11,7 +11,8 @@ add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wdouble-promotion -Wf
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 include(ExternalProject)
 find_package(Git REQUIRED)
@@ -57,7 +58,8 @@ ament_target_dependencies(
   ${PROJECT_NAME}
   Eigen3
   geometry_msgs
-  tf2_ros
+  tf2
+  tf2_geometry_msgs
 )
 
 install(
@@ -80,39 +82,30 @@ ament_export_dependencies(
   Eigen3
   covariance_geometry_cpp
   geometry_msgs
-  tf2_ros
+  tf2
+  tf2_geometry_msgs
 )
 
 if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_gmock REQUIRED)
 
+  ament_lint_auto_find_test_dependencies()
+  ament_find_gtest()
+  ament_find_gmock()
+  
   set(TEST_NAMES
     conversion_test
-    # composition_test
+    composition_test
   )
 
   foreach(TEST_NAME ${TEST_NAMES})
     ament_add_gtest(${TEST_NAME} test/${TEST_NAME}.cpp)
-
-    add_dependencies(
-      ${TEST_NAME}
-      covariance_geometry_cpp
-    )
-
     target_link_libraries(
       ${TEST_NAME}
-      ${CMAKE_CURRENT_BINARY_DIR}/covariance_geometry_cpp/src/lib/libcovariance_geometry_cpp.so
+      ${PROJECT_NAME}
     )
-
-    ament_target_dependencies(
-      ${TEST_NAME}
-      Eigen3
-      geometry_msgs
-      tf2_ros
-    )
-
   endforeach()
 endif()
 

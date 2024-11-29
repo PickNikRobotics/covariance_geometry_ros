@@ -11,96 +11,109 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "covariance_geometry/pose_covariance_composition.hpp"
-#include "covariance_geometry_ros/utils.hpp"
+
+#include <tf2/LinearMath/Transform.h>
+
+#include <geometry_msgs/msg/pose_with_covariance.hpp>
+#include "covariance_geometry/pose_representation.hpp"
+#include "covariance_geometry/pose_covariance_representation.hpp"
+#include "covariance_geometry_ros/covariance_geometry_ros.hpp"
 
 #include "gtest/gtest.h"
-
-using Pose = geometry_msgs::msg::Pose;
-using PoseWithCovariance = geometry_msgs::msg::PoseWithCovariance;
 
 namespace covariance_geometry
 {
 
-const Eigen::Vector3d coord = {0.111, -1.24, 0.35};                               // x, y, z
-const Eigen::Vector3d rpy = {0.9067432, 0.4055079, 0.1055943};                    // r, p, y
-const Eigen::Quaterniond quat = {0.8746791, 0.4379822, 0.1581314, 0.1345454};     // w, x, y, z
-
-const Eigen::Vector3d rpy_gl = {0.12, M_PI_2, 0.34};                              // r, p, y
-const Eigen::Quaterniond quat_gl = {0.6884861, 0.1612045, 0.6884861, 0.1612045};  // w, x, y, z
+const Eigen::Vector3d coord1 = {-0.333330, 0, 0.100000};                // x, y, z
+const Eigen::Quaterniond quat1 = {0.707107, 0.0, 0.707107, -0.000005};  // w, x, y, z
+const Eigen::Vector3d coord2 = {1.435644, 0, 0.0};                      // x, y, z
+const Eigen::Quaterniond quat2 = {1.0, 0.0, 0.0, 0.0};                  // w, x, y, z
 
 TEST(Composition, ROSPoses)
 {
-  Pose pose_in;
-  PoseQuaternion pose_out;
-  pose_in.position.x = coord.x();
-  pose_in.position.y = coord.y();
-  pose_in.position.z = coord.z();
-  pose_in.orientation.x = quat.x();
-  pose_in.orientation.y = quat.y();
-  pose_in.orientation.z = quat.z();
-  pose_in.orientation.w = quat.w();
-  fromROS(pose_in, pose_out);
-  EXPECT_TRUE(pose_out.first.isApprox(coord));
-  EXPECT_TRUE(pose_out.second.isApprox(quat));
+  geometry_msgs::msg::Pose pose1, pose2, pose_out;
+
+  pose1.position.x = coord1.x();
+  pose1.position.y = coord1.y();
+  pose1.position.z = coord1.z();
+  pose1.orientation.x = quat1.x();
+  pose1.orientation.y = quat1.y();
+  pose1.orientation.z = quat1.z();
+  pose1.orientation.w = quat1.w();
+
+  pose2.position.x = coord2.x();
+  pose2.position.y = coord2.y();
+  pose2.position.z = coord2.z();
+  pose2.orientation.x = quat2.x();
+  pose2.orientation.y = quat2.y();
+  pose2.orientation.z = quat2.z();
+  pose2.orientation.w = quat2.w();
+
+  pose_out = compose(pose1, pose2);
+  EXPECT_NEAR(pose_out.position.x, coord1.x(), 1e-6);
 }
 
-TEST(Conversion, ConvertPoseWithCovarianceFromROS)
+TEST(Composition, ROSPoseAndTf)
 {
-  PoseWithCovariance pose_in;
-  PoseQuaternionCovarianceRPY pose_out;
-  pose_in.pose.position.x = coord.x();
-  pose_in.pose.position.y = coord.y();
-  pose_in.pose.position.z = coord.z();
-  pose_in.pose.orientation.x = quat.x();
-  pose_in.pose.orientation.y = quat.y();
-  pose_in.pose.orientation.z = quat.z();
-  pose_in.pose.orientation.w = quat.w();
-  Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor>> cov(pose_in.covariance.data());
-  cov = Eigen::Matrix<double, 6, 6, Eigen::RowMajor>::Random();
-  cov.selfadjointView<Eigen::Upper>();
-  Eigen::Matrix<double, 6, 6, Eigen::RowMajor> cov_out;
-  cov_out = cov;
-  fromROS(pose_in, pose_out);
-  EXPECT_TRUE(pose_out.first.first.isApprox(coord));
-  EXPECT_TRUE(pose_out.first.second.isApprox(quat));
-  EXPECT_TRUE(pose_out.second.isApprox(cov_out));
+  geometry_msgs::msg::Pose pose, pose_out;
+  tf2::Transform tf;
+
+  pose.position.x = coord1.x();
+  pose.position.y = coord1.y();
+  pose.position.z = coord1.z();
+  pose.orientation.x = quat1.x();
+  pose.orientation.y = quat1.y();
+  pose.orientation.z = quat1.z();
+  pose.orientation.w = quat1.w();
+
+  tf.setOrigin(tf2::Vector3(coord2.x(), coord2.y(), coord2.z()));
+  tf.setRotation(tf2::Quaternion(quat2.x(), quat2.y(), quat2.z(), quat2.w()));
+
+  pose_out = compose(pose, tf);
+  EXPECT_NEAR(pose_out.position.x, coord1.x(), 1e-6);
 }
 
-TEST(Conversion, ConvertPoseToROS)
+TEST(Composition, ROSPoseAndTfWithCovariance)
 {
-  PoseQuaternion pose_in;
-  Pose pose_out;
-  pose_in.first = coord;
-  pose_in.second = quat;
-  toROS(pose_in, pose_out);
-  EXPECT_DOUBLE_EQ(pose_out.position.x, coord.x());
-  EXPECT_DOUBLE_EQ(pose_out.position.y, coord.y());
-  EXPECT_DOUBLE_EQ(pose_out.position.z, coord.z());
-  EXPECT_DOUBLE_EQ(pose_out.orientation.x, quat.x());
-  EXPECT_DOUBLE_EQ(pose_out.orientation.y, quat.y());
-  EXPECT_DOUBLE_EQ(pose_out.orientation.z, quat.z());
-  EXPECT_DOUBLE_EQ(pose_out.orientation.w, quat.w());
+  geometry_msgs::msg::PoseWithCovariance pose, pose_out;
+  tf2::Transform tf;
+
+  pose.pose.position.x = coord1.x();
+  pose.pose.position.y = coord1.y();
+  pose.pose.position.z = coord1.z();
+  pose.pose.orientation.x = quat1.x();
+  pose.pose.orientation.y = quat1.y();
+  pose.pose.orientation.z = quat1.z();
+  pose.pose.orientation.w = quat1.w();
+
+  tf.setOrigin(tf2::Vector3(coord2.x(), coord2.y(), coord2.z()));
+  tf.setRotation(tf2::Quaternion(quat2.x(), quat2.y(), quat2.z(), quat2.w()));
+
+  pose_out = compose(pose, tf);
+  EXPECT_NEAR(pose_out.pose.position.x, coord1.x(), 1e-6);
 }
 
-TEST(Conversion, ConvertPoseWithCovarianceToROS)
+TEST(Composition, ROSPosesWithCovariance)
 {
-  PoseQuaternionCovarianceRPY pose_in;
-  PoseWithCovariance pose_out;
-  pose_in.first.first = coord;
-  pose_in.first.second = quat;
-  pose_in.second = Eigen::Matrix<double, 6, 6>::Random();
-  pose_in.second.selfadjointView<Eigen::Upper>();
+  geometry_msgs::msg::PoseWithCovariance pose1, pose2, pose_out;
 
-  toROS(pose_in, pose_out);
-  EXPECT_DOUBLE_EQ(pose_out.pose.position.x, coord.x());
-  EXPECT_DOUBLE_EQ(pose_out.pose.position.y, coord.y());
-  EXPECT_DOUBLE_EQ(pose_out.pose.position.z, coord.z());
-  EXPECT_DOUBLE_EQ(pose_out.pose.orientation.x, quat.x());
-  EXPECT_DOUBLE_EQ(pose_out.pose.orientation.y, quat.y());
-  EXPECT_DOUBLE_EQ(pose_out.pose.orientation.z, quat.z());
-  EXPECT_DOUBLE_EQ(pose_out.pose.orientation.w, quat.w());
-  Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor>> cov(pose_out.covariance.data());
-  EXPECT_TRUE(cov.isApprox(pose_in.second));
+  pose1.pose.position.x = coord1.x();
+  pose1.pose.position.y = coord1.y();
+  pose1.pose.position.z = coord1.z();
+  pose1.pose.orientation.x = quat1.x();
+  pose1.pose.orientation.y = quat1.y();
+  pose1.pose.orientation.z = quat1.z();
+  pose1.pose.orientation.w = quat1.w();
+
+  pose2.pose.position.x = coord2.x();
+  pose2.pose.position.y = coord2.y();
+  pose2.pose.position.z = coord2.z();
+  pose2.pose.orientation.x = quat2.x();
+  pose2.pose.orientation.y = quat2.y();
+  pose2.pose.orientation.z = quat2.z();
+  pose2.pose.orientation.w = quat2.w();
+
+  pose_out = compose(pose1, pose2);
+  EXPECT_NEAR(pose_out.pose.position.x, coord1.x(), 1e-6);
 }
 }  // namespace covariance_geometry
