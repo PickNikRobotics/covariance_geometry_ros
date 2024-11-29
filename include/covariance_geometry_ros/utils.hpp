@@ -18,7 +18,6 @@
 
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
-// #include <tf2/LinearMath/Transform.h>
 
 using Pose = geometry_msgs::msg::Pose;
 using PoseWithCovariance = geometry_msgs::msg::PoseWithCovariance;
@@ -44,12 +43,6 @@ inline void fromROS(const PoseWithCovariance & in, PoseQuaternionCovarianceRPY &
   Eigen::Map<const Eigen::Matrix<double, 6, 6, Eigen::RowMajor>> cov(in.covariance.data());
   out.second = cov;
 }
-
-// inline void fromROS(const tf2::Transform &in, PoseQuaternion &out)
-// {
-//   out.first(in.getOrigin());
-//   out.second(in.getRotation());
-// }
 
 /** @name  Convert from covariance geometry ROS type to ROS msgs
   @{ */

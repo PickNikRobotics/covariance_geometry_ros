@@ -66,6 +66,26 @@ void compose(
   toROS(pose_out, out);
 }
 
+Pose compose(
+  const Pose & a,
+  const tf2::Transform & b)
+{
+  Pose b_msg, out;
+  tf2::toMsg(b, b_msg);
+  compose(a, b_msg, out);
+  return out;
+}
+
+PoseWithCovariance compose(
+  const PoseWithCovariance & a,
+  const tf2::Transform & b)
+{
+  PoseWithCovariance b_msg, out;
+  tf2::toMsg(b, b_msg.pose);
+  compose(a, b_msg, out);
+  return out;
+}
+
 // Compose a with b^-1
 void inverseCompose(const Pose & a, const Pose & b, Pose & out)
 {
