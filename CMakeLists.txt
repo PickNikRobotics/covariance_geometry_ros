@@ -87,25 +87,23 @@ ament_export_dependencies(
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  find_package(ament_cmake_gtest REQUIRED)
-  find_package(ament_cmake_gmock REQUIRED)
-
-  ament_lint_auto_find_test_dependencies()
-  ament_find_gtest()
-  ament_find_gmock()
-  
-  set(TEST_NAMES
-    conversion_test
-    composition_test
+  set(TEST_TARGETS
+    test_composition
+    test_conversion
   )
 
-  foreach(TEST_NAME ${TEST_NAMES})
-    ament_add_gtest(${TEST_NAME} test/${TEST_NAME}.cpp)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+
+  find_package(GTest REQUIRED)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_find_gtest()
+
+  foreach(test_name ${TEST_TARGETS})
+    ament_add_gtest("${test_name}" "test/${test_name}.cpp")
     target_link_libraries(
-      ${TEST_NAME}
-      ${PROJECT_NAME}
-    )
+      "${test_name}"
+      ${PROJECT_NAME})
   endforeach()
 endif()
 
