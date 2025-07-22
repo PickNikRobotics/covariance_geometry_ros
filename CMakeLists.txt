@@ -8,6 +8,7 @@ endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wdouble-promotion -Wfloat-equal -Wshadow)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-inline -fno-inline-small-functions")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fno-inline -fno-inline-small-functions")
 
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
